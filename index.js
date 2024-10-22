@@ -9,7 +9,7 @@ app.use(cors()); // Enable CORS for all routes
 app.use(bodyParser.json());
 
 // MongoDB Atlas connection string
-const mongoURI = 'your api here';
+const mongoURI = 'mongodb+srv://ruhi210singh:1234567890@mcrud.gv9mz.mongodb.net/?retryWrites=true&w=majority&appName=mcrud';
 
 // MongoDB connection
 mongoose.connect(mongoURI)
