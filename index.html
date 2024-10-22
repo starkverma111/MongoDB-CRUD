@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MongoDB CRUD Operations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" 
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link href="https://fonts.cdnfonts.com/css/google-sans" rel="stylesheet">
+    <style>
+      * {
+        font-family: 'Product Sans', sans-serif !important;
+      }
+	  
+
+    </style>
+  </head>
+  <body>
+    <div class="container border shadow-sm p-4 m-auto mt-5 w-50 rounded-2">
+      <span class="text-center" id="response"></span>
+      <h1 class="display-6 text-center py-3">MongoDB CRUD Operations</h1>
+	  <div class="d-flex justify-content-end my-4">
+      <button type="button" class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#insert_data_Modal">Add Data</button>
+      </div>
+	  <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th scope="col">Id</th>
+            <th scope="col">Name</th>
+            <th scope="col">City</th>
+            <th scope="col">Update</th>
+            <th scope="col">Delete</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Dynamic content will be inserted here -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Update Modal -->
+    <div class="modal fade" id="update_data_Modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Update Data</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="updateForm">
+              <div class="mb-3">
+                <label for="updateName" class="form-label">Name</label>
+                <input type="text" class="form-control" id="updateName">
+              </div>
+              <div class="mb-3">
+                <label for="updateCity" class="form-label">City</label>
+                <input type="text" class="form-control" id="updateCity">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Save changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insert Modal -->
+    <div class="modal fade" id="insert_data_Modal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Insert Data</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Form with inputs having correct IDs -->
+            <form id="dataForm">
+              <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name">
+              </div>
+              <div class="mb-3">
+                <label for="city" class="form-label">City</label>
+                <input type="text" class="form-control" id="city">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- jQuery AJAX -->
+    <script>
+      $(document).ready(function() {
+        // Fetch and display data in the table
+        fetch();
+
+        function fetch() {
+          $.ajax({
+            url: 'https://my-mongodb-w1wf.onrender.com/fetch',
+            type: "GET",
+            cache: false,
+            success: function(data) {
+              let tableContent = '';
+              data.forEach(function(item) {
+                tableContent += `
+                  <tr>
+                    <td>${item._id}</td>
+                    <td>${item.name}</td>
+                    <td>${item.city}</td>
+                    <td><button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#update_data_Modal" data-id="${item._id}" data-name="${item.name}" data-city="${item.city}">Update</button></td>
+                    <td><button type="button" class="btn btn-danger btn-sm" onclick="deleteData('${item._id}')">Delete</button></td>
+                  </tr>`;
+              });
+              $('#tableBody').html(tableContent); 
+            },
+            error: function(xhr, status, error) {
+              console.error("Error fetching data:", error);
+            }
+          });
+        }
+
+        // Insert data into the table
+        $('#dataForm').on('submit', function(e) {
+          e.preventDefault();
+          var formData = {
+            name: $('#name').val(),
+            city: $('#city').val()
+          };
+
+          $.ajax({
+            url: 'https://my-mongodb-w1wf.onrender.com/insert',
+            type: 'POST',
+            data: JSON.stringify(formData),
+            contentType: 'application/json',
+            success: function(response) {
+			 $('#response').html('<p>' + response.message + '</p>');
+			$("#response").fadeOut(3000);
+             
+              $('#dataForm')[0].reset();
+              $('#insert_data_Modal').modal('hide');
+              fetch(); // Refresh the table after inserting new data
+            },
+            error: function(xhr, status, error) {
+              let errorMessage = 'An unknown error occurred';
+              if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+              }
+              $('#response').html('<p>Error: ' + errorMessage + '</p>');
+            }
+          });
+        });
+
+        // Delete data
+        window.deleteData = function(id) {
+          $.ajax({
+            url: `https://my-mongodb-w1wf.onrender.com/delete/${id}`,
+            type: 'DELETE',
+            success: function(response) {
+              fetch(); // Refresh the table after deletion
+            },
+            error: function(xhr, status, error) {
+              console.error("Error deleting data:", error);
+            }
+          });
+        }
+
+        // Handle update modal
+        $('#update_data_Modal').on('show.bs.modal', function(event) {
+          var button = $(event.relatedTarget);
+          var id = button.data('id');
+          var name = button.data('name');
+          var city = button.data('city');
+          
+          // Pre-fill the form fields in the modal
+          $('#updateName').val(name);
+          $('#updateCity').val(city);
+
+          // Handle update submission
+          $('#updateForm').off('submit').on('submit', function(e) {
+            e.preventDefault();
+
+            var updatedData = {
+              name: $('#updateName').val(),
+              city: $('#updateCity').val()
+            };
+
+            $.ajax({
+              url: `https://my-mongodb-w1wf.onrender.com/update/${id}`,
+              type: 'PUT',
+              data: JSON.stringify(updatedData),
+              contentType: 'application/json',
+              success: function(response) {
+                $('#update_data_Modal').modal('hide');
+                fetch(); // Refresh the table after update
+              },
+              error: function(xhr, status, error) {
+                console.error("Error updating data:", error);
+              }
+            });
+          });
+        });
+      });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" 
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  </body>
+</html>
